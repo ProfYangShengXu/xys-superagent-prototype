@@ -1,0 +1,43 @@
+# A minimal, runnable configuration.
+# From the repository root:
+#   python3 -m xys_superagent.app.cli run --config examples/config.toml --max-passes 4
+#   python3 -m xys_superagent.app.cli view --config examples/config.toml
+
+[app]
+# The ledger. Keep it on a local (ext4) path in real use; WAL on a Windows
+# drive is slower and can be refused by the filesystem.
+database = "xys_superagent.db"
+poll_interval_s = 2.0
+batch_size = 10
+stall_after_s = 1800
+retry_base_s = 2.0
+
+[policy]
+# Only these people, explicitly mentioning the agent, may start work.
+allowed_people = ["alice", "bob"]
+allowed_bots = ["ci-bot"]
+agent_name = "xys_superagent"
+allowed_actions = ["read", "write", "commit", "test"]
+max_rounds = 3
+allowed_scope_roots = ["."]
+default_scope_paths = ["."]
+
+[sources.local]
+kind = "file"
+path = "examples/events.jsonl"
+workspace = "demo"
+
+[executor]
+# The second executor implementation: any command line. It prints what it was
+# asked to do and exits, so a probe on the next pass reports "ready".
+kind = "cli"
+command = ["sh", "-c", "echo accepted: $XYS_SUMMARY"]
+
+# To use the bridge instead, replace the block above with:
+# [executor]
+# kind = "contactor"
+# endpoint = "http://127.0.0.1:8791/"
+# agent = "dsh"
+
+[panel]
+kind = "text"

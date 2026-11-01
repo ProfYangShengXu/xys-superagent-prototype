@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xys-superagent"
+version = "0.1.0"
+description = "Ticket orchestration across agent frameworks: one ledger, one stage table, one panel"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "xys_superagent contributors" }]
+keywords = ["agents", "orchestration", "tickets", "workflow"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX",
+]
+dependencies = []
+
+[project.scripts]
+xys-superagent = "xys_superagent.app.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["xys_superagent*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

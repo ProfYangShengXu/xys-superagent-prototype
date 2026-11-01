@@ -1,0 +1,2 @@
+{"external_id": "evt-1", "actor": "alice", "actor_kind": "person", "text": "Fix the parser crash on empty input.", "summary": "fix parser crash on empty input", "workspace": "demo", "branch": "fix/parser", "scope_paths": ["src/parser"], "mentions_agent": true, "thread": "thread-1", "created_at": 1767225600}
+{"external_id": "evt-2", "actor": "bob", "actor_kind": "person", "text": "Update the parser documentation.", "summary": "update parser docs", "workspace": "demo", "scope_paths": ["docs/parser"], "mentions_agent": true, "thread": "thread-2", "created_at": 1767225601}
