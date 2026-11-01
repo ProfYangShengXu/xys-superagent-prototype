@@ -1,25 +1,23 @@
 # xys-superagent-prototype
 
-**Tickets and a ledger for work that is handed to agents.** One process, one
-SQLite file, no external services. The executor is swappable; the core does not
-move.
+A ledger for work you hand to agents: one process, one SQLite file, no external
+services. Swap the executor and the core does not move.
 
-`contactor` is the hands and feet: it carries a message to an agent.
-`xys_superagent` is the ticket and the ledger: it remembers what was asked, what
-is in scope, what stage the work is at, and who is waiting for a person.
+`contactor` carries a message to an agent. `xys_superagent` keeps the ticket:
+what was asked, how far it may go, what stage it is at, who is waiting.
 
-> **Status: research prototype, not production software.** 110 tests and one
-> runnable example; read the code before you rely on it. The problem it solves
-> is narrow — one machine, one team, a handful of agents — and the trade-offs
-> here do not transfer unchanged to another scale.
+> Status: research prototype, not production software. 110 tests and one
+> runnable example; read the code before you rely on it. It solves a narrow
+> problem (one machine, one team, a handful of agents), and the trade-offs here
+> do not carry over unchanged to another scale.
 
 ```bash
 python3 -m xys_superagent.app.cli run --config examples/config.toml --max-passes 4
 python3 -m xys_superagent.app.cli view --config examples/config.toml
 ```
 
-Three incidents motivate every line in this repository, because all three
-happened before it existed:
+Three things went wrong before this existed. Each one left a structural
+answer behind:
 
 | incident | the structural answer |
 |---|---|
@@ -103,9 +101,9 @@ outside `app/`, or a cycle. It runs in the test suite and from `doctor`.
 | C7 | every refusal carries a reason and returns to the source | `test_c7_reject_feedback.py` |
 | C8 | the import graph has no cycles and no reverse dependencies | `test_c8_layering.py` |
 
-Each test file contains a positive case **and** a counter-example that
-deliberately breaks the mechanism and asserts the check would notice. Run them
-with an environment that has `pytest` installed (the package itself has no
+Every test file has a positive case and a counter-example. The counter-example
+breaks the mechanism on purpose, so the check has to go red — otherwise the test
+proves nothing. Run them where `pytest` is installed (the package itself has no
 third-party dependencies):
 
 ```bash
@@ -175,10 +173,11 @@ WSL mirrored networking), and `doctor` says so when the probe fails.
 
 ## Design notes
 
-* The ledger is the only truth. Slots are derived from ticket state, so a
-  restart cannot leak a slot; stages are recomputed, never remembered as flags.
-* The pass commits the cursor and the tickets it produced in one SQLite
-  transaction, **before** anything is handed to an executor. A crash can replay
+* The ledger is the only truth: slots are derived from ticket state, so a
+  restart cannot leak one, and stages are recomputed rather than remembered as
+  flags.
+* A pass commits the cursor and the tickets it produced in one SQLite
+  transaction, and does that before anything reaches an executor. A crash can replay
   an event; it cannot dispatch work the ledger does not know about. The
   executor receives a stable `dispatch_key`, so a retry is deduplicated by a
   bridge that keys on it.
