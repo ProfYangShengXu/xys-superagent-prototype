@@ -8,6 +8,11 @@ move.
 `xys_superagent` is the ticket and the ledger: it remembers what was asked, what
 is in scope, what stage the work is at, and who is waiting for a person.
 
+> **Status: research prototype, not production software.** 110 tests and one
+> runnable example; read the code before you rely on it. The problem it solves
+> is narrow — one machine, one team, a handful of agents — and the trade-offs
+> here do not transfer unchanged to another scale.
+
 Three incidents motivate every line in this repository, because all three
 happened before it existed:
 
@@ -16,6 +21,15 @@ happened before it existed:
 | the same job was dispatched twice after a bridge restart | an idempotency key per event plus a cursor committed in the same transaction as the ticket |
 | a 40-minute compile was judged dead because no file changed | stage is computed from executor reports and a heartbeat, never from file timestamps |
 | an agent changed one more file than it was asked to | the ticket carries a `Mandate`; anything outside `scope_paths` can only be handed back |
+
+## What this is not
+
+```
+✗ not an agent framework   no model calls, no tool surface, no opinion on how an agent thinks
+✗ not a scheduler         no optimal assignment; serialising per workspace is enough
+✗ not a job queue         no retry storms, no priorities; retries come from executor reports
+✗ not multi-tenant        one ledger, one writer
+```
 
 ## Run it
 
@@ -33,6 +47,10 @@ python3 -m xys_superagent.app.cli doctor --config examples/config.toml
 `run` is a single-threaded loop: one pass, then the next, never two at once.
 `view`, `ticket` and `doctor` open the ledger without starting the loop, so
 they work while an executor or an event source is unavailable.
+
+If you have a coding agent at hand, hand it this README and let it run `doctor`
+first: every line says what that item is worth and what to do about it, so the
+agent does not have to guess. 中文说明见 [README.zh-CN.md](README.zh-CN.md)。
 
 ## Layout
 
@@ -156,34 +174,24 @@ WSL mirrored networking), and `doctor` says so when the probe fails.
 See `docs/design.md` for where this implementation departs from the written
 spec and why.
 
-## 中文
+## Docs
 
-`xys_superagent` 是给「派给 agent 的活」记账的一层：一张工单带范围（`Mandate`），
-阶段查表不猜，事件幂等不重放，面板只列等人处理的四条阶段。
+Read in this order; each one only uses what the ones before it introduced.
 
-三条事故各有一条结构性的挡法：
-
-1. **重复派活**——`(source_id, external_id)` 唯一索引 + 工单与游标同一事务落盘，
-   投递发生在事务之后；崩溃最坏是重放事件，不会派出账本不知道的活。
-2. **误判卡死**——`stalled` 只由心跳判断，不看文件 mtime；40 分钟编译期间只要
-   执行器在心跳就算 `working`（回合结束但后台任务在跑也保留槽位）。
-3. **越权改范围**——工单里的 `scope_paths` 就是边界，越界只能交回，不能自己扩。
-
-跑起来（仓库根目录）：
-
-```bash
-python3 -m xys_superagent.app.cli run  --config examples/config.toml --max-passes 4
-python3 -m xys_superagent.app.cli view --config examples/config.toml
-python3 -m xys_superagent.app.cli doctor --config examples/config.toml
+```
+README.md              this file
+README.zh-CN.md        中文版（同样的内容，按中文习惯重写，不是逐句直译）
+docs/architecture.zh-CN.md  the design document this was built from (Chinese)
+docs/design.md         where this implementation departs from that spec, and why
+examples/config.toml   the smallest configuration that runs
+examples/events.jsonl  two example events
 ```
 
-接新框架：实现 `ExecutorPort` 的三个方法（`hand_off` / `deliver` / `stop`），
-在 `xys_superagent/app/build.py` 里加一行即可，`core/` 与 `ports/` 一个字节不动。
-分层是否被破坏由 `scripts/check_layering.py` 扫 import 图检查，不是靠人眼。
-
-测试用 pytest（包本身零第三方依赖）；C1–C8 每条都有正例和「把机制改坏必须变红」
-的反例。`exec_contactor` 连不上桥时抛 `BridgeUnreachable` 并给出地址与下一步，
-不会返回空结果假装没有活。
+`docs/architecture.zh-CN.md` is the design document this implementation was
+built from: the change-frequency layering, the four ports, the stage table, the
+acceptance criteria C1–C8, and where this prototype deliberately stops short of
+the reference one. It is in Chinese, and it is the one page worth reading before
+changing `core/`.
 
 ## License
 
