@@ -13,6 +13,11 @@ is in scope, what stage the work is at, and who is waiting for a person.
 > is narrow — one machine, one team, a handful of agents — and the trade-offs
 > here do not transfer unchanged to another scale.
 
+```bash
+python3 -m xys_superagent.app.cli run --config examples/config.toml --max-passes 4
+python3 -m xys_superagent.app.cli view --config examples/config.toml
+```
+
 Three incidents motivate every line in this repository, because all three
 happened before it existed:
 
@@ -21,6 +26,20 @@ happened before it existed:
 | the same job was dispatched twice after a bridge restart | an idempotency key per event plus a cursor committed in the same transaction as the ticket |
 | a 40-minute compile was judged dead because no file changed | stage is computed from executor reports and a heartbeat, never from file timestamps |
 | an agent changed one more file than it was asked to | the ticket carries a `Mandate`; anything outside `scope_paths` can only be handed back |
+
+<details>
+<summary>Contents</summary>
+
+- [What this is not](#what-this-is-not)
+- [Run it](#run-it)
+- [Layout](#layout)
+- [Three guarantees, and how they are tested](#three-guarantees-and-how-they-are-tested)
+- [Adding another agent framework](#adding-another-agent-framework)
+- [Configuration](#configuration)
+- [Design notes](#design-notes)
+- [Docs](#docs)
+
+</details>
 
 ## What this is not
 
